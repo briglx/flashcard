@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style>
+		body{
+			
+		}
+
+		*.unselectable {
+		   -moz-user-select: -moz-none;
+		   -khtml-user-select: none;
+		   -webkit-user-select: none;
+
+		   /*
+		     Introduced in IE 10.
+		     See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+		   */
+		   -ms-user-select: none;
+		   user-select: none;
+		}
+
+		.txtTask{
+			border: 1px solid #ccc;
+			margin: 3px 10px 3px 0;
+			width: 50%;
+			font-size: 1em;
+		}
+		table{
+			
+			text-align: center;		
+			
+			
+			margin-left: auto ;
+  			margin-right: auto ;
+
+		}
+		.numbers{
+			text-align: center;
+			width: 80% ;
+  			margin-left: auto ;
+  			margin-right: auto ;
+  			float:left;
+  			font-size: 7em;
+		}
+		hr{
+			padding:0px;
+			border:3px solid black;
+
+		}
+		.info{
+			font-size: 2em;
+			float:right;
+			width:20%;			
+		}
+		.reset{
+			display: none;
+
+		}
+		.reset button{
+			font-size: 1em;
+		}
+	</style>
+
+	
+</head>
+<body>
+	<div>
+		<div class="info">		
+			<table>
+				<tr class="unselectable"><td>Time:</td><td class="countDown"></td></tr>
+				<tr class="unselectable"><td>Total:</td><td class="total"></td></tr>
+				<tr class="reset"><td colspan="2"><button>Reset</button></td></tr>
+			</table>			
+		</div>
+
+		<div class="numbers unselectable">
+			<table>
+				<tr>
+					<td>
+					</td>
+					<td>
+						<span class="num1">?</span>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						x
+					</td>
+					<td>
+						<span class="num2">?</span>
+					</td>
+				</tr>
+			</table>
+			<hr/>
+			<div>
+				<span class="answer"></span>
+			</div>
+		</div>
+		<div style="clear:both"></div>
+	</div>
+
+
+	<!-- Placed at the end of the document so the pages load faster -->
+	<script src="jquery-1.11.0.min.js"></script>
+
+	<script>
+
+		var timer ={
+			startTime: new Date().getTime(),
+			endTime: new Date().getTime(),
+			duration: this.endTime - this.startTime,
+			start: function(){
+				this.startTime = new Date().getTime();
+			},
+			stop: function(){
+				this.endTime = new Date().getTime();
+				this.duration = this.endTime - this.startTime;
+			},
+			getDuration: function(){
+				return this.duration;
+			},
+			reset: function(){
+				this.duration = 0;
+			}
+		};
+
+		var countDown = {
+			remainingSec: 6,
+			started: false,
+			startTime: new Date().getTime(),
+			endTime: new Date().getTime(),			
+			now: new Date().getTime(),
+			interval:0,
+			reset:function(){
+				this.remainingSec = 6;
+				this.started = false;
+				this.startTime= new Date().getTime();
+				this.endTime= new Date().getTime();		
+				this.now= new Date().getTime();
+				this.interval=0;
+			},
+			onInterval: function(cntr, onInt, next){
+
+				return function(){
+
+					cntr.now = new Date().getTime();
+					cntr.remainingSec--;
+					onInt();
+
+					// If now 
+					if(cntr.endTime <= cntr.now){
+						clearInterval(cntr.interval);
+						this.started = false;
+						next();
+					}					
+				}			
+
+			},	
+			start : function(onInt, next){
+				this.started = true;
+				this.startTime = new Date().getTime();
+				this.endTime = this.startTime + this.remainingSec * 1000;
+				
+				this.interval = setInterval(this.onInterval(this, onInt, next), 1000);
+
+			}
+
+		};
+
+		var history = {
+			topProblems:[],
+			count:0,
+			reset:function(){
+				this.count = 0;
+				this.topProblems=[];
+			},
+			addProblem:function(problem){
+
+				this.count++;
+
+				// Keep track of top 10 most difficult problems
+
+				// add to list, 
+				this.topProblems.push(problem)
+
+				//sort by duration, 
+				this.topProblems = this.topProblems.sort(function(a, b) {return b.duration - a.duration})
+
+				// keep top ten
+				this.topProblems = this.topProblems.slice(0,3);
+				
+
+			}
+		};
+
+		function createProblem(num1, num2, duration) {
+			return {
+				multiplicand: num1,
+				multiplier: num2,
+				product: num1*num2,
+				duration: duration
+			};
+
+		}
+		
+		$(function(){
+
+			var isNewCard = true;
+			var min = 2;
+			var max = 12;
+			var num1 = pickNumber();
+			var num2 = pickNumber();
+
+			$(".countDown").text(countDown.remainingSec);
+			$(".numbers").click(newCard);
+			$(".reset").click(onReset);
+
+			function pickNumber(){
+
+				// Kian
+				var myArray = [2,3,3,3,3,3,3,3,4,4,4,4,4,5,6,6,6,6,6,6,6,6,6,7,7,7,7,7,7,8,8,8,8,8,9,9,9,9,9,9,9,9,9,9,9,9,10,11,12,12,12,12,12,12,12,12,12,12,12,12];   
+				//var myArray = [1,2,3,4,5,6,7,8,9,10,11,12];
+				// Ezra
+				//var myArray = [2,3,4,5,6,6,7,7,8,9,9,9,10,11,12,12,12];
+
+				// Eden
+				//var myArray = [1,2,3];
+
+				var rand = myArray[Math.floor(Math.random() * myArray.length)];
+
+				//return parseInt(Math.random() * (max - min) + min);
+				return rand;
+			}
+
+			function onReset(){
+
+				history.reset();
+				countDown.reset();
+
+				isNewCard == true
+
+				$("body").css("background-color", "#FFF");				
+				$(".countDown").text(countDown.remainingSec);
+				$(".total").text(history.count);
+
+				$(".reset").hide();
+
+				$('.num1').text("?");
+				$('.num2').text("?");
+				$('.answer').text("");
+
+			}
+			
+			function newCard(){
+
+				if(!countDown.started){
+					countDown.start(function(){
+						$(".countDown").text(countDown.remainingSec);
+					}, function(){
+						$(".countDown").text(countDown.remainingSec);
+						$("body").css("background-color", "#FFB2B2");						
+						$(".total").text(history.count);
+						$(".reset").show();
+					});
+				}
+
+				if(countDown.remainingSec > 0){
+
+					if(isNewCard == true){
+
+						timer.start();
+						
+						num1 = pickNumber();
+						num2 = pickNumber();
+
+						// Pick random numbers	
+						$('.duration').text("");
+
+						// Get elements
+						$('.num1').text(num1);
+						$('.num2').text(num2);
+						$('.answer').text("");
+						isNewCard = false;	
+
+					}
+					else
+					{
+						timer.stop();					
+
+						$('.answer').text(num1 * num2);
+
+						var duration = timer.duration/1000;
+
+						// Track history
+						prob = createProblem(num1, num2, duration);
+						history.addProblem(prob);
+
+
+						isNewCard = true;	
+
+						console.log(num1 + " * " + num2 + " = " + num1 * num2 + '   ' + duration)
+
+					}
+
+				}
+				else
+				{
+					isNewCard = true;	
+				}
+
+			}
+
+		});
+	
+	</script>
+
+</body>
+</html>
+
+
+
+
+
